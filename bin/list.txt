@@ -1,0 +1,75 @@
+# === MEDIA & VIDEO ===
+youtube.com
+googlevideo.com
+ytimg.com
+ggpht.com
+youtu.be
+netflix.com
+nflxvideo.net
+nflxext.com
+nflximg.net
+spotify.com
+soundcloud.com
+
+# === DISCORD ===
+dis.gd
+discord.app
+discord.co
+discord.com
+discord.gg
+discord.media
+discord.new
+discord.store
+discord.status
+discordapp.com
+discordapp.net
+discordcdn.com
+
+# === SOCIAL & MESSENGERS ===
+instagram.com
+cdninstagram.com
+facebook.com
+fbcdn.net
+fb.com
+twitter.com
+x.com
+twimg.com
+t.co
+whatsapp.com
+whatsapp.net
+wa.me
+web.whatsapp.com
+
+# === DEVELOPER TOOLS (GITHUB) ===
+github.com
+github.io
+githubusercontent.com
+github.blog
+github.community
+github.dev
+raw.githubusercontent.com
+
+
+# === ROBLOX FULL SUPPORT ===
+roblox.com
+www.roblox.com
+auth.roblox.com
+assetgame.roblox.com
+assetdelivery.roblox.com
+catalog.roblox.com
+avatar.roblox.com
+apis.roblox.com
+clientsettings.api.roblox.com
+chat.roblox.com
+voice.roblox.com
+friends.roblox.com
+setup.rbxcdn.com
+rbxcdn.com
+gamejoin.roblox.com
+client.roblox.com
+
+# === TRACKERS & OTHER ===
+rutracker.org
+nnmclub.to
+rutor.info
+rezka.ag
