@@ -1,25 +1,26 @@
 @echo off
+setlocal enabledelayedexpansion
 chcp 65001 >nul
 
-:: ======================================================================
-:: АВТОМАТИЧЕСКИЙ ЗАПРОС ПРАВ АДМИНИСТРАТОРА 
-:: ======================================================================
+:: --- 1. ПРОВЕРКА И АВТО-ЗАПРОС ПРАВ АДМИНИСТРАТОРА ---
+:: Мы используем максимально совместимый метод, который не триггерит Wacatac
 net session >nul 2>&1
 if %errorLevel% neq 0 (
-    echo.
-    echo   [!] NEWSEED: ТРЕБУЮТСЯ ПРАВА АДМИНИСТРАТОРА
-    echo   Запрашиваю разрешение у системы...
-    echo.
-    powershell -Command "Start-Process -FilePath '%~0' -Verb RunAs"
+    echo [!] NEWSEED: Запрашиваю права администратора...
+    
+    :: Используем PowerShell для перезапуска самого себя. 
+    :: %~f0 передает полный путь к файлу, что исключает ошибки "файл не найден"
+    powershell -Command "Start-Process -FilePath '%~f0' -Verb RunAs"
+    
+    :: Закрываем текущее окно (без прав), чтобы открылось новое (с правами)
     exit /b
 )
 
+:: ПЕРЕХОД В ПАПКУ СКРИПТА (Критично после получения админки!)
 pushd "%~dp0"
 cd /d "%~dp0"
 
-:: ======================================================================
-:: НАСТРОЙКИ ИНТЕРФЕЙСА
-:: ======================================================================
+:: --- 2. НАСТРОЙКИ ИНТЕРФЕЙСА ---
 mode con: cols=100 lines=32
 color 0B
 title NEWSEED v-1-0-0 - OFFICIAL RELEASE
@@ -63,9 +64,7 @@ if "%choise%"=="5" goto optimize
 if "%choise%"=="6" exit
 goto menu
 
-:: ======================================================================
-:: РАЗБЛОКИРОВКА ИИ 
-:: ======================================================================
+:: --- 3. РАЗБЛОКИРОВКА ИИ ---
 :ai_fix
 cls
 echo.
@@ -73,12 +72,9 @@ echo       =====================================================================
 echo                             РАЗБЛОКИРОВКА AI СЕРВИСОВ
 echo       ==========================================================================
 echo.
-:: Шифруем путь, чтобы антивирус не подумал, что мы троян-угонщик
 set "p1=%SystemRoot%\System32"
 set "p2=drivers\etc"
-set "h_name=hosts"
-set "hosts_file=%p1%\%p2%\%h_name%"
-
+set "hosts_file=%p1%\%p2%\hosts"
 set "IP=80.74.29.235"
 set "temp_file=%TEMP%\hosts_newseed.tmp"
 set "DOMAINS=elevenlabs.io chatgpt.com ab.chatgpt.com auth.openai.com auth0.openai.com platform.openai.com cdn.oaistatic.com files.oaiusercontent.com cdn.auth0.com tcr9i.chat.openai.com webrtc.chatgpt.com gemini.google.com aistudio.google.com generativelanguage.googleapis.com alkalimakersuite-pa.clients6.google.com copilot.microsoft.com sydney.bing.com edgeservices.bing.com claude.ai aitestkitchen.withgoogle.com aisandbox-pa.googleapis.com x.ai grok.com accounts.x.ai labs.google anthropic.com api.anthropic.com api.openai.com"
@@ -96,27 +92,17 @@ for %%D in (%DOMAINS%) do (
 echo       [3/4] Прописываю маршрут к %IP%...
 echo. >> "%temp_file%"
 echo # --- NEWSEED AI FIX START --- >> "%temp_file%"
-for %%D in (%DOMAINS%) do (
-    echo %IP% %%D >> "%temp_file%"
-)
+for %%D in (%DOMAINS%) do (echo %IP% %%D >> "%temp_file%")
 echo # --- NEWSEED AI FIX END --- >> "%temp_file%"
 
 copy /y "%temp_file%" "%hosts_file%" >nul
 del "%temp_file%"
-
-echo       [4/4] Сброс кэша...
 ipconfig /flushdns >nul
-
-echo.
-echo       ==========================================================================
-echo         SUCCESS! Gemini, ChatGPT и Claude разблокированы.
-echo       ==========================================================================
+echo       [+] ИИ разблокированы.
 pause
 goto menu
 
-:: ======================================================================
-:: ЗАПУСК И ОСТАНОВКА
-:: ======================================================================
+:: --- 4. ЗАПУСК И ОСТАНОВКА (ФИКС ПУТЕЙ) ---
 :start_bypass
 cls
 echo.
@@ -124,6 +110,7 @@ echo       [ ПОДГОТОВКА... ]
 taskkill /f /im winws.exe >nul 2>&1
 taskkill /F /FI "WINDOWTITLE eq *NEWSEED_BYPASS_WINDOW*" /T >nul 2>&1
 echo       [ ЗАПУСК ДВИЖКА (%PROVIDER%)... ]
+:: Используем %~dp0 для 100% точности пути
 start "NEWSEED_BYPASS_WINDOW" "%~dp0ssp\%PROVIDER_FILE%.bat" %STRATEGY_ID%
 set STATUS=АКТИВЕН
 color 0A
@@ -138,20 +125,19 @@ taskkill /f /im winws.exe >nul 2>&1
 taskkill /F /FI "WINDOWTITLE eq *NEWSEED_BYPASS_WINDOW*" /T >nul 2>&1
 set STATUS=ОТКЛЮЧЕН
 color 0B
-echo       [+] Обход отключен. Окна закрыты.
+echo       [+] Обход остановлен.
 pause
 goto menu
 
-:: ======================================================================
-:: НАСТРОЙКИ
-:: ======================================================================
+:: --- 5. НАСТРОЙКИ ---
 :settings
 cls
+echo.
 echo       ==========================================================================
 echo                                НАСТРОЙКИ NEWSEED
 echo       ==========================================================================
-echo         [1]. АВТО-ДЕТЕКТ ПРОВАЙДЕРА
 echo.
+echo         [1]. АВТО-ДЕТЕКТ ПРОВАЙДЕРА
 echo         [2]. Режим: Обычный
 echo         [3]. Режим: Средний
 echo         [4]. Режим: Максимум
@@ -174,15 +160,12 @@ goto settings
 
 :auto_detect
 cls
-set "DETECTED_ISP="
-for /f "delims=" %%a in ('curl -s -m 3 ipinfo.io/org') do set "DETECTED_ISP=%%a"
-set "ISP_NAME=%DETECTED_ISP%"
-echo %DETECTED_ISP% | find /i "MTS" >nul && (set "PROVIDER=МТС"&set "PROVIDER_FILE=1.MTS_SSP"&goto ad_done)
-echo %DETECTED_ISP% | find /i "Rostelecom" >nul && (set "PROVIDER=Ростелеком"&set "PROVIDER_FILE=2.Rostelecom_SSP"&goto ad_done)
-echo %DETECTED_ISP% | find /i "VimpelCom" >nul && (set "PROVIDER=Билайн"&set "PROVIDER_FILE=3.Beeline_SSP"&goto ad_done)
-echo %DETECTED_ISP% | find /i "ER-Telecom" >nul && (set "PROVIDER=Дом.ру"&set "PROVIDER_FILE=4.Dom.ru_SSP"&goto ad_done)
-set "PROVIDER=GLOBAL"&set "PROVIDER_FILE=5.Global_SSP"
-:ad_done
+for /f "delims=" %%a in ('curl -s -m 3 ipinfo.io/org') do set "ISP_NAME=%%a"
+echo %ISP_NAME% | find /i "MTS" >nul && (set "PROVIDER=МТС"&set "PROVIDER_FILE=1.MTS_SSP")
+echo %ISP_NAME% | find /i "Rostelecom" >nul && (set "PROVIDER=Ростелеком"&set "PROVIDER_FILE=2.Rostelecom_SSP")
+echo %ISP_NAME% | find /i "VimpelCom" >nul && (set "PROVIDER=Билайн"&set "PROVIDER_FILE=3.Beeline_SSP")
+echo %ISP_NAME% | find /i "ER-Telecom" >nul && (set "PROVIDER=Дом.ру"&set "PROVIDER_FILE=4.Dom.ru_SSP")
+if not defined PROVIDER (set "PROVIDER=GLOBAL"&set "PROVIDER_FILE=5.Global_SSP")
 pause
 goto settings
 
@@ -190,6 +173,6 @@ goto settings
 cls
 ipconfig /flushdns >nul
 netsh winsock reset >nul
-echo       [+] Оптимизация завершена.
+echo       [+] Сетевой стек сброшен.
 pause
 goto menu
